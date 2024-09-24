@@ -3,14 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>图片浏览</title>
+    <title>滚动与缩放的图片浏览</title>
     <style>
         body, html {
             margin: 0;
             padding: 0; /* 移除内边距 */
             height: 100%;
             overflow-x: hidden; /* 禁止横向滚动 */
-            font-family: Arial, sans-serif;
             width: 100vw; /* 确保宽度填满视口 */
         }
 
@@ -23,7 +22,7 @@
 
         .top, .bottom {
             flex: 1;
-            overflow-y: auto; /* 允许纵向滚动 */
+            overflow-y: auto;
             padding: 0; /* 移除内边距 */
             width: 100%; /* 确保宽度填满父元素 */
         }
@@ -73,56 +72,59 @@
         document.getElementById('top').onscroll = function() {
             localStorage.setItem('topScroll', this.scrollTop);
         };
-
         document.getElementById('bottom').onscroll = function() {
             localStorage.setItem('bottomScroll', this.scrollTop);
         };
 
-        // 动态生成上半部分的图片列表
+        // 动态生成上半部分图片列表
         const imageContainerTop = document.getElementById('image-container-top');
-        const imageContainerBottom = document.getElementById('image-container-bottom');
-
         for (let i = 11; i <= 20; i++) {
-            const imgTop = document.createElement('img');
-            imgTop.src = `File ${String(i).padStart(5, '0')}.jpeg`;
-            imgTop.alt = `Image ${i}`;
-            imgTop.className = 'image';
-            imageContainerTop.appendChild(imgTop);
+            const img = document.createElement('img');
+            img.src = `File 0000${i}.jpeg`;
+            img.alt = `Image ${i}`;
+            img.className = 'image';
+            imageContainerTop.appendChild(img);
+        }
 
-            const imgBottom = document.createElement('img');
-            imgBottom.src = `File ${String(i).padStart(5, '0')}.jpeg`;
-            imgBottom.alt = `Image ${i}`;
-            imgBottom.className = 'image';
-            imageContainerBottom.appendChild(imgBottom);
+        // 动态生成下半部分图片列表
+        const imageContainerBottom = document.getElementById('image-container-bottom');
+        for (let i = 11; i <= 20; i++) {
+            const img = document.createElement('img');
+            img.src = `File ${String(i).padStart(5, '0')}.jpeg`;
+            img.alt = `Image ${i}`;
+            img.className = 'image';
+            imageContainerBottom.appendChild(img);
         }
 
         // 缩放和拖移的实现
-        let scaleTop = parseFloat(localStorage.getItem('imageScaleTop')) || 1;
-        let translateYTop = parseFloat(localStorage.getItem('imageTranslateYTop')) || 0;
-        let scaleBottom = parseFloat(localStorage.getItem('imageScaleBottom')) || 1;
-        let translateYBottom = parseFloat(localStorage.getItem('imageTranslateYBottom')) || 0;
+        let scaleTop = 1, translateYTop = 0;
+        let scaleBottom = 1, translateYBottom = 0;
+        let initialDistance = 0;
+        let initialScaleTop = scaleTop;
+        let initialScaleBottom = scaleBottom;
+        let lastTouchYTop = 0;
+        let lastTouchYBottom = 0;
 
         function restoreImageState() {
-            // 恢复上半部分和下半部分的缩放和拖移状态
+            // 恢复上半部分的缩放和拖移状态
             const imagesTop = document.querySelectorAll('#image-container-top .image');
-            const imagesBottom = document.querySelectorAll('#image-container-bottom .image');
-
             imagesTop.forEach(image => {
                 image.style.transform = `translateY(${translateYTop}px) scale(${scaleTop})`;
             });
 
+            // 恢复下半部分的缩放和拖移状态
+            const imagesBottom = document.querySelectorAll('#image-container-bottom .image');
             imagesBottom.forEach(image => {
                 image.style.transform = `translateY(${translateYBottom}px) scale(${scaleBottom})`;
             });
         }
 
-        // 上半部分的触摸事件
-        const imageContainerTop = document.getElementById('image-container-top');
+        // 上半部分的事件监听
         imageContainerTop.addEventListener('touchstart', function (e) {
             if (e.touches.length === 1) {
                 lastTouchYTop = e.touches[0].clientY;
             } else if (e.touches.length === 2) {
-                initialDistanceTop = Math.hypot(
+                initialDistance = Math.hypot(
                     e.touches[0].clientX - e.touches[1].clientX,
                     e.touches[0].clientY - e.touches[1].clientY
                 );
@@ -146,7 +148,7 @@
                     e.touches[0].clientX - e.touches[1].clientX,
                     e.touches[0].clientY - e.touches[1].clientY
                 );
-                scaleTop = initialScaleTop * (newDistance / initialDistanceTop);
+                scaleTop = initialScaleTop * (newDistance / initialDistance);
                 const imagesTop = document.querySelectorAll('#image-container-top .image');
                 imagesTop.forEach(image => {
                     image.style.transform = `translateY(${translateYTop}px) scale(${scaleTop})`;
@@ -155,18 +157,17 @@
         });
 
         imageContainerTop.addEventListener('touchend', function () {
-            // 保存上半部分的缩放和拖移状态
+            // 保存上半部分图片的缩放和拖移状态
             localStorage.setItem('imageScaleTop', scaleTop);
             localStorage.setItem('imageTranslateYTop', translateYTop);
         });
 
-        // 下半部分的触摸事件
-        const imageContainerBottom = document.getElementById('image-container-bottom');
+        // 下半部分的事件监听
         imageContainerBottom.addEventListener('touchstart', function (e) {
             if (e.touches.length === 1) {
                 lastTouchYBottom = e.touches[0].clientY;
             } else if (e.touches.length === 2) {
-                initialDistanceBottom = Math.hypot(
+                initialDistance = Math.hypot(
                     e.touches[0].clientX - e.touches[1].clientX,
                     e.touches[0].clientY - e.touches[1].clientY
                 );
@@ -190,7 +191,7 @@
                     e.touches[0].clientX - e.touches[1].clientX,
                     e.touches[0].clientY - e.touches[1].clientY
                 );
-                scaleBottom = initialScaleBottom * (newDistance / initialDistanceBottom);
+                scaleBottom = initialScaleBottom * (newDistance / initialDistance);
                 const imagesBottom = document.querySelectorAll('#image-container-bottom .image');
                 imagesBottom.forEach(image => {
                     image.style.transform = `translateY(${translateYBottom}px) scale(${scaleBottom})`;
@@ -199,7 +200,7 @@
         });
 
         imageContainerBottom.addEventListener('touchend', function () {
-            // 保存下半部分的缩放和拖移状态
+            // 保存下半部分图片的缩放和拖移状态
             localStorage.setItem('imageScaleBottom', scaleBottom);
             localStorage.setItem('imageTranslateYBottom', translateYBottom);
         });
