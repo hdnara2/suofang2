@@ -61,10 +61,14 @@
     </div>
 
     <script>
-        // 恢复滚动位置
+        // 恢复滚动位置和缩放状态
         window.onload = function() {
             document.getElementById('top').scrollTop = localStorage.getItem('topScroll') || 0;
             document.getElementById('bottom').scrollTop = localStorage.getItem('bottomScroll') || 0;
+            scaleTop = localStorage.getItem('imageScaleTop') ? parseFloat(localStorage.getItem('imageScaleTop')) : 1;
+            translateYTop = localStorage.getItem('imageTranslateYTop') ? parseFloat(localStorage.getItem('imageTranslateYTop')) : 0;
+            scaleBottom = localStorage.getItem('imageScaleBottom') ? parseFloat(localStorage.getItem('imageScaleBottom')) : 1;
+            translateYBottom = localStorage.getItem('imageTranslateYBottom') ? parseFloat(localStorage.getItem('imageTranslateYBottom')) : 0;
             restoreImageState();
         };
 
